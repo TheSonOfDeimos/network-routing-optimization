@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 3.16)
+project(network-routing-optimization)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS  -Werror)
+
+set(SRC_DIR src/)
+set(SRC_MODEL src/model)
+set(SRC_COMMON src/common)
+set(SRC_CORE src/core)
+set(CXX_HEADER_FILENAME "/*.hpp")
+set(CXX_SOURCE_FILENAME "/*.cpp")
+
+include_directories(${SRC_DIR}/model)
+include_directories(${SRC_DIR}/common)
+include_directories(${SRC_DIR}/core)
+
+file(GLOB PROJECT_SRC 
+        ${SRC_DIR}${CXX_SOURCE_FILENAME}
+        ${SRC_DIR}${CXX_HEADER_FILENAME}
+        ${SRC_MODEL}${CXX_SOURCE_FILENAME}
+        ${SRC_MODEL}${CXX_HEADER_FILENAME}
+        ${SRC_COMMON}${CXX_SOURCE_FILENAME}
+        ${SRC_COMMON}${CXX_HEADER_FILENAME}
+        ${SRC_CORE}${CXX_SOURCE_FILENAME}
+        ${SRC_CORE}${CXX_HEADER_FILENAME})
+
+add_executable(network-routing-optimization ${PROJECT_SRC})

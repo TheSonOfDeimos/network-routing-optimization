@@ -1,0 +1,51 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Build release",
+            "command": "cmake -DCMAKE_BUILD_TYPE=Release ../ && make",
+            "options": {
+                "cwd": "${workspaceFolder}/build/"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
+            "label": "Build debug",
+            "command": "cmake -DCMAKE_BUILD_TYPE=Debug ../ && make",
+            "options": {
+                "cwd": "${workspaceFolder}/build/"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+
+        {
+            "type": "shell",
+            "label": "Run debug version",
+            "command": "cmake -DCMAKE_BUILD_TYPE=Debug ../ && make && ./network-routing-optimization",
+            "options": {
+                "cwd": "${workspaceFolder}/build/"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

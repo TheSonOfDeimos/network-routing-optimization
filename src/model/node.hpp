@@ -28,8 +28,12 @@ public:
 
     // Absolute values
     int NetworkInterfaceCount = 1; // Number of parallel working network interfaces
-    double bufferSize = 100; // Mb
     double bandwidth = 1000; // Mbit/sec
+    dataVolume_t bufferVolume = 100; // Mb
+    QueuePushRule bufferPushRule;
+    QueuePopRule bufferPopRule;
+    QueueDropRule bufferDropRule;
+
 
 private:
     static hostId_t counter() 

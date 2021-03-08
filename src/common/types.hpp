@@ -2,11 +2,29 @@
 #define TYPES_HPP
 
 #include <string>
+#include <cassert>
 
 using guid_t = int;
 
 using status_t = int;
-#define IS_SUCCESS(x) for(;;){if (x >= 0) break; goto exit;}
+
+// Not Errors
+#define ERROR_OK            0
+#define ERROR_NO_EFFECT     12
+
+// Errors
+#define ERROR_UNKNOWN       -1
+#define ERROR_LOGIC         -2
+
+#define IS_SUCCESS(x)       ((static_cast<status_t>(x)) >= 0)
+#define IS_UNSUCCESS(s)     (!IS_SUCCESS(s))
+#define EXIT(s)             do { status = s; goto exit; } while (0)
+#define EXIT_IF(cond, res)  do { if (cond) EXIT(res); } while(0)
+#define EXIT_IF_ERROR       do { if (IS_UNSUCCESS(status)) goto exit; } while (0)
+#define RUN(s)              do { status = s; EXIT_IF_ERROR; } while(0)
+
+#define assertm(exp, msg) assert(((void)msg, exp))
+#define NOT_IMPLEMENTED_YET do { assertm(false, "Not Implemented yet"); } while (0)
 
 using hostId_t = int;
 using hostAddress_t = std::string;

@@ -3,6 +3,7 @@
 Node::Node(const NodeCharacteristics &ch, std::shared_ptr<RoutingTable> table)
     : UnitBase(),
     m_table(table),
+    m_queue(ch.bufferVolume, ch.bufferPushRule, ch.bufferPopRule, ch.bufferDropRule),
     m_params(ch)
 {
 }

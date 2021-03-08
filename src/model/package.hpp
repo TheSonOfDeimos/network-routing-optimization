@@ -5,7 +5,7 @@
 
 struct Package
 {
-    Package(hostAddress_t src, hostAddress_t dst, dataVolume_t vol, TransportProto proto = TransportProto::TCP, Priority prior = Priority::NONE, ttl_t ttl = INT32_MAX);
+    Package(hostAddress_t src, hostAddress_t dst, dataVolume_t vol, TransportProto proto = TransportProto::UDP, Priority prior = Priority::NONE, ttl_t ttl = INT32_MAX);
 
     hostAddress_t source;
     hostAddress_t destination;

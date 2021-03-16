@@ -10,11 +10,13 @@ using status_t = int;
 
 // Not Errors
 #define ERROR_OK            0
+#define ERROR_RESULT_TRUE   3
 #define ERROR_NO_EFFECT     12
 
 // Errors
 #define ERROR_UNKNOWN       -1
 #define ERROR_LOGIC         -2
+#define ERROR_RESULT_FALSE  -3
 
 #define IS_SUCCESS(x)       ((static_cast<status_t>(x)) >= 0)
 #define IS_UNSUCCESS(s)     (!IS_SUCCESS(s))
@@ -26,8 +28,7 @@ using status_t = int;
 #define assertm(exp, msg) assert(((void)msg, exp))
 #define NOT_IMPLEMENTED_YET do { assertm(false, "Not Implemented yet"); } while (0)
 
-using hostId_t = int;
-using hostAddress_t = std::string;
+using hostAddress_t = int;
 using hostName_t = std::string;
 using port_t = int;
 using packageId_t  = int;

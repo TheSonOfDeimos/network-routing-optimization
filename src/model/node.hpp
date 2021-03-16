@@ -6,19 +6,19 @@
 #include <thread>
 #include <atomic>
 #include <memory>
+#include <map>
 
 #include "types.hpp"
 #include "package.hpp"
 #include "packageQueue.hpp"
-#include "routingTable.hpp"
 #include "unitBase.hpp"
+
+class RoutingTable;
 
 class NodeCharacteristics
 {
 public:
     hostAddress_t addr = dhcp();
-    hostName_t name = "NONE";
-    hostId_t id = counter();
 
     // Relative values
     double ping = 0; // ms
@@ -34,22 +34,11 @@ public:
     QueuePopRule bufferPopRule;
     QueueDropRule bufferDropRule;
 
-
 private:
-    static hostId_t counter() 
-    {
-        static std::atomic<hostId_t> idCounter;
-        return idCounter++;
-    }
-
-    static hostAddress_t dhcp() 
-    {
-        static std::atomic<hostId_t> fourthOct = 0;
-        return "192.168.1." + std::to_string(fourthOct++);
-    }
+    static hostAddress_t dhcp();
 };
 
-class Node : public UnitBase
+class Node : public UnitBase, public std::enable_shared_from_this<Node>
 {
 public:
     Node(const NodeCharacteristics& ch, std::shared_ptr<RoutingTable> table);
@@ -57,14 +46,14 @@ public:
     status_t update() override;
 
     status_t send(packagePtr_t pack);
-    status_t connectToNode(std::weak_ptr<Node> node);
+    status_t connectToNode(std::shared_ptr<Node> node);
 
     NodeCharacteristics getNodeCharacteristics();
+    std::map<hostAddress_t, std::shared_ptr<Node>> getConnections();
 
 private:
-    hostAddress_t m_address;
-    std::vector<std::weak_ptr<Node>> m_connections;
-    std::shared_ptr<RoutingTable> m_table;
+    std::map<hostAddress_t, std::weak_ptr<Node>> m_connections;
+    std::weak_ptr<RoutingTable> m_table;
     PackageQueue m_queue;
     NodeCharacteristics m_params;
 };

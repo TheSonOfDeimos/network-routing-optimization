@@ -7,39 +7,38 @@
 #include "model/modelCore.hpp"
 #include "model/packageQueue.hpp"
 
+#include "algorithm/bellmanFord.hpp"
+
 int main()
 {
 
     status_t status = ERROR_OK;
 
-    PackageQueue q(100, QueuePushRule::BACK, QueuePopRule::FRONT, QueueDropRule::NEW);
-    RUN(q.push(std::make_unique<Package>("192.168.1.1", "192.168.1.2", 150)));
-    RUN(q.push(std::make_unique<Package>("192.168.1.1", "192.168.1.2", 0)));
-    RUN(q.push(std::make_unique<Package>("192.168.1.1", "192.168.1.2", 10)));
-    RUN(q.push(std::make_unique<Package>("192.168.1.1", "192.168.1.2", 10)));
-    RUN(q.push(std::make_unique<Package>("192.168.1.1", "192.168.1.2", 10)));
-    RUN(q.push(std::make_unique<Package>("192.168.1.1", "192.168.1.2", 10)));
-    RUN(q.push(std::make_unique<Package>("192.168.1.1", "192.168.1.2", 61)));
+    auto table = std::make_shared<RoutingTable>();
+    std::map<hostAddress_t, std::shared_ptr<Node> > nodeMap;
 
-    {
-        auto res_1 = q.pop();
-        auto res_2 = q.pop();
-        auto res_3 = q.pop();
-        auto res_4 = q.pop();
-        auto res_5 = q.pop();
-        auto res_6 = q.pop();
-        auto res_7 = q.pop();
-    }
+    auto node_1 = std::make_shared<Node>(NodeCharacteristics{}, table);
+    nodeMap.insert({node_1->getNodeCharacteristics().addr, node_1});
 
-    // {
-    //     ModelCore core;
-    //     core.buildNetwork(100);
+    auto node_2 = std::make_shared<Node>(NodeCharacteristics{}, table);
+    nodeMap.insert({node_2->getNodeCharacteristics().addr, node_2});
 
-    //     core.start();
-    //     std::this_thread::sleep_for(std::chrono::seconds(5));
-    //     core.stop();
-    //     std::cout << Time::instance().get() << "\n";
-    // }
+    auto node_3 = std::make_shared<Node>(NodeCharacteristics{}, table);
+    nodeMap.insert({node_3->getNodeCharacteristics().addr, node_3});
+
+    auto node_4 = std::make_shared<Node>(NodeCharacteristics{}, table);
+    nodeMap.insert({node_4->getNodeCharacteristics().addr, node_4});
+
+    auto node_5 = std::make_shared<Node>(NodeCharacteristics{}, table);
+    nodeMap.insert({node_5->getNodeCharacteristics().addr, node_5});
+
+    RUN(node_1->connectToNode(node_2));
+    RUN(node_1->connectToNode(node_3));
+    RUN(node_2->connectToNode(node_4));
+    RUN(node_2->connectToNode(node_3));
+    RUN(node_4->connectToNode(node_5));
+
+    RUN(table->buildRoutes(AlgorithmType::BELLMAN_FORD, nodeMap));
 
 exit:
     return status;

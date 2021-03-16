@@ -22,7 +22,7 @@ private:
     status_t buildRoutingTable();
 
 private:
-    std::map<hostId_t, std::unique_ptr<Node>> m_nodesVec;
+    std::map<hostAddress_t, std::shared_ptr<Node>> m_nodesVec;
     std::shared_ptr<RoutingTable> m_table;
     std::atomic<bool> m_isRunning;
     std::future<status_t> m_runningFut;

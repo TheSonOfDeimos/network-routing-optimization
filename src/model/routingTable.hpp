@@ -2,28 +2,36 @@
 #define ROUTING_TABLE_HPP
 
 #include <vector>
+#include <mutex>
+#include <memory>
+#include <map>
 
 #include "types.hpp"
+#include "algorithmBase.hpp"
+#include "node.hpp"
 
-struct Route
+enum class AlgorithmType : int
 {
-    double cost;
-    std::vector<std::pair<hostId_t, hostAddress_t>> path;
-    std::pair<hostId_t, hostAddress_t> source;
-    std::pair<hostId_t, hostAddress_t> destination;
+    SCRAT = 0,
+    DIJKSTRA,
+    BELLMAN_FORD
 };
 
 class RoutingTable
 {
 public:
-    const Route& get(hostAddress_t src, hostAddress_t dest);
-    status_t add(const Route& route);
+    RoutingTable() = default;
 
+    Route get(hostAddress_t src, hostAddress_t dest) const;
+    status_t buildRoutes(AlgorithmType type, const std::map<hostAddress_t, std::shared_ptr<Node>>& nodes);
 
 private:
-    std::vector<Route> m_table; // sorted by cost with the same source
+    ConnectMatrix_t hostsToMatrix(const std::map<hostAddress_t, std::shared_ptr<Node>> & nodes);
 
-
+private:
+    RouteTable_t m_table; // sorted by cost with the same source
+    std::unique_ptr<AlgorithmBase> m_algo;
+    std::mutex m_mtx;
 };
 
 #endif

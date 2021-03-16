@@ -28,7 +28,7 @@ status_t ModelCore::buildNetwork(int nodeCount)
     for(int i = 0; i < nodeCount; i++)
     {
         NodeCharacteristics ch;
-        if (m_nodesVec.insert({ch.id, std::make_unique<Node>(ch, m_table)}).second == false)
+        if (m_nodesVec.insert({ch.addr, std::make_shared<Node>(ch, m_table)}).second == false)
         {
             return -1;
         }

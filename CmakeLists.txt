@@ -4,16 +4,21 @@ project(network-routing-optimization)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS  -Werror)
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DEBUG")
+
 set(SRC_DIR src/)
 set(SRC_MODEL src/model)
 set(SRC_COMMON src/common)
 set(SRC_CORE src/core)
+set(SRC_ALGORITHM src/algorithm)
 set(CXX_HEADER_FILENAME "/*.hpp")
 set(CXX_SOURCE_FILENAME "/*.cpp")
 
 include_directories(${SRC_DIR}/model)
 include_directories(${SRC_DIR}/common)
 include_directories(${SRC_DIR}/core)
+include_directories(${SRC_DIR}/common)
+include_directories(${SRC_DIR}/algorithm)
 
 file(GLOB PROJECT_SRC 
         ${SRC_DIR}${CXX_SOURCE_FILENAME}
@@ -23,6 +28,8 @@ file(GLOB PROJECT_SRC
         ${SRC_COMMON}${CXX_SOURCE_FILENAME}
         ${SRC_COMMON}${CXX_HEADER_FILENAME}
         ${SRC_CORE}${CXX_SOURCE_FILENAME}
-        ${SRC_CORE}${CXX_HEADER_FILENAME})
+        ${SRC_CORE}${CXX_HEADER_FILENAME}
+        ${SRC_ALGORITHM}${CXX_SOURCE_FILENAME}
+        ${SRC_ALGORITHM}${CXX_HEADER_FILENAME})
 
 add_executable(network-routing-optimization ${PROJECT_SRC})

@@ -38,24 +38,24 @@ packagePtr_t PackageQueue::pop()
 
     switch (m_popRule)
     {
-    case QueuePopRule::FRONT :
+    case QueuePopRule::FRONT:
     {
         pack = std::move(m_queue.front());
         m_queue.pop_front();
         break;
     }
-    case QueuePopRule::BACK :
+    case QueuePopRule::BACK:
     {
         pack = std::move(m_queue.back());
         m_queue.pop_back();
         break;
     }
-    case QueuePopRule::RANDOM :
+    case QueuePopRule::RANDOM:
     {
         NOT_IMPLEMENTED_YET;
         break;
     }
-    case QueuePopRule::PRIORITY :
+    case QueuePopRule::PRIORITY:
     {
         NOT_IMPLEMENTED_YET;
         break;

@@ -64,32 +64,48 @@ exit:
 RouteTable_t BellmanFord::mergeMatrixToRouteTable(const std::vector<ConnectMatrix_t> &matrixVec)
 {
     RouteTable_t table;
-    for (auto& line : matrixVec.back())
+
+    for (auto& matrix : matrixVec)
     {
-        for (auto& element : line.second)
+        for (auto& line : matrix)
         {
-            double minCost = element.second.cost;
-            auto bestCell = element.second;
-            for (auto& matrix : matrixVec)
+            for (auto& elem : line.second)
             {
-                if (matrix.find(line.first) == matrix.end() || matrix.at(line.first).find(element.first) == matrix.at(line.first).end())
-                {
-                    continue;
-                }
-                auto newCell = matrix.at(line.first).at(element.first);
-                if (minCost > newCell.cost)
-                {
-                    minCost = newCell.cost;
-                    bestCell = newCell;
-                }
+                table.push_back({});
+                table.back().cost = elem.second.cost;
+                table.back().source = line.first;
+                table.back().destination = elem.first;
+                table.back().path = elem.second.path;
             }
-            table.push_back({});
-            table.back().cost = bestCell.cost;
-            table.back().source = bestCell.path.back();
-            table.back().destination = bestCell.path.front();
-            table.back().path = bestCell.path;
         }
     }
+
+    // for (auto& line : matrixVec.back())
+    // {
+    //     for (auto& element : line.second)
+    //     {
+    //         double minCost = element.second.cost;
+    //         auto bestCell = element.second;
+    //         for (auto& matrix : matrixVec)
+    //         {
+    //             if (matrix.find(line.first) == matrix.end() || matrix.at(line.first).find(element.first) == matrix.at(line.first).end())
+    //             {
+    //                 continue;
+    //             }
+    //             auto newCell = matrix.at(line.first).at(element.first);
+    //             if (minCost > newCell.cost)
+    //             {
+    //                 minCost = newCell.cost;
+    //                 bestCell = newCell;
+    //             }
+    //         }
+    //         table.push_back({});
+    //         table.back().cost = bestCell.cost;
+    //         table.back().source = bestCell.path.back();
+    //         table.back().destination = bestCell.path.front();
+    //         table.back().path = bestCell.path;
+    //     }
+    // }
 
     return table;
 }

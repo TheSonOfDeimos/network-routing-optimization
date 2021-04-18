@@ -1,7 +1,7 @@
 #include "packageQueue.hpp"
 
 PackageQueue::PackageQueue(dataVolume_t volume, QueuePushRule pushRule, QueuePopRule popRule, QueueDropRule dropRule)
-    : m_totalVolume(volume),
+    : m_totalVolume(volume * 1e6),
       m_pushRule(pushRule),
       m_popRule(popRule),
       m_dropRule(dropRule)
@@ -11,6 +11,8 @@ PackageQueue::PackageQueue(dataVolume_t volume, QueuePushRule pushRule, QueuePop
 status_t PackageQueue::push(packagePtr_t package)
 {
     status_t status = ERROR_OK;
+
+    EXIT_IF(package == nullptr, ERROR_NO_EFFECT);
 
     EXIT_IF(m_totalVolume < package->volume || package->volume == 0, ERROR_NO_EFFECT);
     {

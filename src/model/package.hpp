@@ -9,7 +9,7 @@ struct Package
 
     hostAddress_t source;
     hostAddress_t destination;
-    dataVolume_t volume;
+    dataVolume_t volume; // In bytes
     TransportProto protocol;
     Priority priority;
     ttl_t ttl;

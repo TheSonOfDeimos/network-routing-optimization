@@ -44,7 +44,7 @@ private:
     status_t drop(dataVolume_t volumeToReclaim);
 
 private:
-    dataVolume_t m_totalVolume;
+    dataVolume_t m_totalVolume; // byte
     QueuePushRule m_pushRule;
     QueuePopRule m_popRule;
     QueueDropRule m_dropRule;

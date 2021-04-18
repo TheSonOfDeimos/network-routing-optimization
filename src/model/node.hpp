@@ -12,6 +12,7 @@
 #include "package.hpp"
 #include "packageQueue.hpp"
 #include "unitBase.hpp"
+#include "packageProcessor.hpp"
 
 class RoutingTable;
 
@@ -28,8 +29,8 @@ public:
 
     // Absolute values
     int NetworkInterfaceCount = 1; // Number of parallel working network interfaces
-    double bandwidth = 1000; // Mbit/sec
-    dataVolume_t bufferVolume = 100; // Mb
+    double bandwidth = 100000; // Mbit/sec
+    dataVolume_t bufferVolume = 1000; // Mb
     QueuePushRule bufferPushRule;
     QueuePopRule bufferPopRule;
     QueueDropRule bufferDropRule;
@@ -43,9 +44,14 @@ class Node : public UnitBase, public std::enable_shared_from_this<Node>
 public:
     Node(const NodeCharacteristics& ch, std::shared_ptr<RoutingTable> table);
 
+    // Updates state of this node for current timestamp
     status_t update() override;
 
+    // Sends package to node by calling receive for destination node inside
     status_t send(packagePtr_t pack);
+    // Receve package by insetting into network queue (m_queue)
+    status_t receive(packagePtr_t pack);
+    // Connects nodes to each other
     status_t connectToNode(std::shared_ptr<Node> node);
 
     NodeCharacteristics getNodeCharacteristics();
@@ -55,6 +61,7 @@ private:
     std::map<hostAddress_t, std::weak_ptr<Node>> m_connections;
     std::weak_ptr<RoutingTable> m_table;
     PackageQueue m_queue;
+    PackageProcessor m_processor;
     NodeCharacteristics m_params;
 };
 

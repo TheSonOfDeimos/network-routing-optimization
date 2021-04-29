@@ -1,0 +1,36 @@
+Todo:
+  ☐ Topology builder
+    ✔  DCell @started(21-04-21 01:30) @done(21-04-23 20:10) @lasted(2d18h40m5s)
+    ☐  BCube
+    ☐  FatTree
+    ☐  Free topology with random connections
+
+  ☐ Algorithms
+    ☐ Deimos
+    ☐ Dijkstra
+    ✔ Bellman-Ford @done(21-04-20 22:23)
+
+  ✔ Behaviour simulator @done(21-04-25 17:15)
+    ✔ Producer @started(21-04-23 22:19) @done(21-04-25 17:15) @lasted(1d18h56m25s)
+    ✔ Consumer @done(21-04-25 17:15)
+    ✔ Transitor (MB), Requires RoutingTable modernisation @done(21-04-25 17:15)
+    ✔ All this roles requires to be combinable @done(21-04-25 17:15)
+    ✔ Node modernisation, each should have access to other nodes list @done(21-04-25 17:15)
+    ✔ Node modernisation, each node should have roles @done(21-04-25 17:15)
+
+  ☐ Package queue
+    ☐ Priority push
+    ☐ Priority pop
+
+    ☐ Random push
+    ☐ Random pop
+
+    ☐ Drop first
+    ☐ Drop random
+  
+  ☐ Statistics module
+    ☐ Add metrics measurement @started(21-04-26 22:56)
+
+  ☐ Model Core API
+
+  ☐ GUI

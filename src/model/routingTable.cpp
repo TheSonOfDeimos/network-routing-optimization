@@ -22,7 +22,7 @@ Route RoutingTable::get(hostAddress_t src, hostAddress_t dest) const
     return *found;
 }
 
-status_t RoutingTable::buildRoutes(AlgorithmType type, const std::map<hostAddress_t, std::shared_ptr<Node> > &nodes)
+status_t RoutingTable::buildRoutes(AlgorithmType type, int maxPathLength, const std::map<hostAddress_t, std::shared_ptr<Node>> &nodes)
 {
     status_t status = ERROR_OK;
     auto matrix = hostsToMatrix(nodes);
@@ -43,7 +43,7 @@ status_t RoutingTable::buildRoutes(AlgorithmType type, const std::map<hostAddres
     }
     case AlgorithmType::BELLMAN_FORD:
     {
-        m_algo = std::make_unique<BellmanFord>();
+        m_algo = std::make_unique<BellmanFord>(maxPathLength);
         break;
     }
     default:
@@ -68,7 +68,6 @@ ConnectMatrix_t RoutingTable::hostsToMatrix(const std::map<hostAddress_t, std::s
         Cell cell = {
             ch_1.ping,
             ch_1.packetLoss,
-            ch_1.packetDrop,
             ch_1.speed,
             ch_1.bandwidth,
             ch_1.bufferVolume};

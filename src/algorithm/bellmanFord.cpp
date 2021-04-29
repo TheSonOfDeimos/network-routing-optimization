@@ -5,6 +5,11 @@
 
 #include "types.hpp"
 
+BellmanFord::BellmanFord(int maxPathLength)
+    : m_maxPathLength(maxPathLength)
+{
+}
+
 status_t BellmanFord::adoptStartMatrix(ConnectMatrix_t &startMatrix)
 {
     status_t status = ERROR_OK;
@@ -29,7 +34,7 @@ status_t BellmanFord::isPathPossible(hostAddress_t startLineAddr, const std::pai
     EXIT_IF(prevLineAddr == prevElement.first, ERROR_RESULT_FALSE);
     EXIT_IF(prevLineAddr == startElement.first && prevElement.first == startLineAddr, ERROR_RESULT_FALSE);
     EXIT_IF(prevElement.second.path.back() != startElement.second.path.front(), ERROR_LOGIC);
-
+    EXIT_IF(prevElement.second.path.size() >= m_maxPathLength, ERROR_RESULT_FALSE);
     // Find cycles
     {
         std::vector<hostAddress_t> se = startElement.second.path;

@@ -8,10 +8,12 @@ PackageProcessor::PackageProcessor(double bandwidth)
 status_t PackageProcessor::push(packagePtr_t pack)
 {
     status_t status = ERROR_OK;
+    std::lock_guard<std::mutex> lock(m_mtx);
 
     EXIT_IF(pack == nullptr, ERROR_NO_EFFECT);
 
     {
+        pack->inProcess = Time::instance().get();
         m_currentPackage.reset(nullptr);
         m_currentPackage = std::move(pack);
 
@@ -29,10 +31,13 @@ bool PackageProcessor::isReady()
 }
 
 packagePtr_t PackageProcessor::pop()
-{
+{   
+    std::lock_guard<std::mutex> lock(m_mtx);
     if (m_currentPackage == nullptr)
     {
         return nullptr;
     }
+
+    m_currentPackage->outProcess = Time::instance().get();
     return std::move(m_currentPackage);
 }

@@ -1,10 +1,13 @@
 #ifndef PACKAGE_PROCESSOR_HPP
 #define PACKAGE_PROCESSOR_HPP
 
+#include <mutex>
+
 #include "types.hpp"
 #include "package.hpp"
 #include "time.hpp"
 
+// Thread-safe
 class PackageProcessor
 {
 public:
@@ -22,6 +25,8 @@ private:
     packagePtr_t m_currentPackage;
     modelTime_t m_processingTime;
     Timer m_timer;
+
+    std::mutex m_mtx;
 };
 
 #endif

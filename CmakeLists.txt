@@ -11,6 +11,8 @@ set(SRC_MODEL src/model)
 set(SRC_COMMON src/common)
 set(SRC_CORE src/core)
 set(SRC_ALGORITHM src/algorithm)
+set(SRC_STATISTIC src/statistic)
+
 set(CXX_HEADER_FILENAME "/*.hpp")
 set(CXX_SOURCE_FILENAME "/*.cpp")
 
@@ -19,6 +21,7 @@ include_directories(${SRC_DIR}/common)
 include_directories(${SRC_DIR}/core)
 include_directories(${SRC_DIR}/common)
 include_directories(${SRC_DIR}/algorithm)
+include_directories(${SRC_DIR}/statistic)
 
 file(GLOB PROJECT_SRC 
         ${SRC_DIR}${CXX_SOURCE_FILENAME}
@@ -30,6 +33,8 @@ file(GLOB PROJECT_SRC
         ${SRC_CORE}${CXX_SOURCE_FILENAME}
         ${SRC_CORE}${CXX_HEADER_FILENAME}
         ${SRC_ALGORITHM}${CXX_SOURCE_FILENAME}
-        ${SRC_ALGORITHM}${CXX_HEADER_FILENAME})
+        ${SRC_ALGORITHM}${CXX_HEADER_FILENAME}
+        ${SRC_STATISTIC}${CXX_HEADER_FILENAME}
+        ${SRC_STATISTIC}${CXX_SOURCE_FILENAME})
 
 add_executable(network-routing-optimization ${PROJECT_SRC})

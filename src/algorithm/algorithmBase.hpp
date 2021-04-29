@@ -11,7 +11,6 @@ struct Cell
     // Relative values
     double ping; // ms
     double packetLoss; // amount of lost packets in % per 100 packets
-    double packetDrop; // amount of dropped packets from queue in % per 100 packets
     double speed; // Mbit/sec
 
     // Absolute values

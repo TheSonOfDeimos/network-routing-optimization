@@ -1,6 +1,7 @@
 #include "node.hpp"
 
 #include "routingTable.hpp"
+#include "statistic.hpp"
 
 hostAddress_t NodeCharacteristics::dhcp()
 {
@@ -8,24 +9,50 @@ hostAddress_t NodeCharacteristics::dhcp()
     return addr++;
 }
 
+std::shared_ptr<NodeContainer>  Node::m_nodeContainer;
+
 Node::Node(const NodeCharacteristics &ch, std::shared_ptr<RoutingTable> table)
     : UnitBase(),
       m_table(table),
-      m_queue(ch.bufferVolume, ch.bufferPushRule, ch.bufferPopRule, ch.bufferDropRule),
-      m_processor(ch.bandwidth),
       m_params(ch)
 {
+    m_params.addr = NodeCharacteristics::dhcp();
+    m_queue = std::make_unique<PackageQueue>(0, ch.bufferVolume, ch.bufferPushRule, ch.bufferPopRule, ch.bufferDropRule);
+
+    if (m_nodeContainer == nullptr)
+    {
+        m_nodeContainer = std::make_shared<NodeContainer>();
+    }
+
+    m_nodeContainer->add(this, m_params.addr, m_params.roles);
+
+    for (int i = 0; i < m_params.NetworkInterfaceCount; i++)
+    {
+        m_processorVec.emplace_back(std::make_unique<PackageProcessor>(m_params.bandwidth));
+    }
+}
+
+Node::~Node()
+{
+    m_nodeContainer->remove(this);
+}
+
+std::shared_ptr<NodeContainer> Node::getNodeContainer()
+{
+    return m_nodeContainer;
 }
 
 status_t Node::update()
 {
     status_t status = ERROR_OK;
 
-    if (m_processor.isReady())
+    if (m_behaviourSimulator == nullptr)
     {
-        RUN(send(std::move(m_processor.pop())));
-        RUN(m_processor.push(std::move(m_queue.pop())));
+        m_behaviourSimulator = std::make_unique<BehaviourSimulator>(shared_from_this());
     }
+    
+    RUN(m_behaviourSimulator->act());
+    Statistic::instance().report(m_params);
 
 exit:
     return status;
@@ -38,7 +65,14 @@ status_t Node::send(packagePtr_t pack)
     EXIT_IF(pack == nullptr, ERROR_NO_EFFECT);
 
     // This node is destination
-    EXIT_IF(pack->destination == m_params.addr, ERROR_OK);
+    if (pack->destination == m_params.addr)
+    {
+        pack->outSystem = Time::instance().get();
+        pack->isReached = true;
+        pack->lastNode = m_params.addr;
+        Statistic::instance().report(std::move(pack));
+        EXIT(ERROR_OK);
+    }
 
     {
         Route route = m_table.lock()->get(pack->source, pack->destination);
@@ -61,7 +95,7 @@ status_t Node::receive(packagePtr_t pack)
 {
     status_t status = ERROR_OK;
     EXIT_IF(pack == nullptr, ERROR_NO_EFFECT);
-    RUN(m_queue.push(std::move(pack)));
+    RUN(m_queue->push(std::move(pack)));
 exit:
     return status;
 }
@@ -112,7 +146,7 @@ NodeCharacteristics Node::getNodeCharacteristics()
     return m_params;
 }
 
-std::map<hostAddress_t, std::shared_ptr<Node>> Node::getConnections()
+std::map<hostAddress_t, std::shared_ptr<Node> > Node::getConnections()
 {
     std::map<hostAddress_t, std::shared_ptr<Node> > connections;
     auto iter = m_connections.begin();
@@ -128,4 +162,15 @@ std::map<hostAddress_t, std::shared_ptr<Node>> Node::getConnections()
         iter++;
     }
     return connections;
+}
+
+status_t Node::updateMetrics()
+{
+    status_t status = ERROR_OK;
+
+    m_params.packetsTotaly = m_queue->getTotal();
+    m_params.packetsDropped = m_queue->getDrops();
+    m_params.packetLoss = m_params.packetsTotaly / m_params.packetsDropped * 100;
+
+    return status;
 }

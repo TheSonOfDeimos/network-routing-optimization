@@ -9,6 +9,12 @@
 // In picoseconds
 using modelTime_t = __uint128_t;
 
+static const modelTime_t g_onePicosecond = 1;
+static const modelTime_t g_oneNanosecond = 1e3;
+static const modelTime_t g_oneMicrosecond = 1e6;
+static const modelTime_t g_oneMillisecond = 1e9;
+static const modelTime_t g_oneSecond = 1e12;
+
 class Time
 {
 public:
@@ -25,7 +31,7 @@ public:
 private:
     modelTime_t m_time = 0;
     modelTime_t m_timePrev = 0;
-    modelTime_t m_timeStep = 10;
+    modelTime_t m_timeStep = 1000;
     std::mutex m_mtx;
 };
 
@@ -45,6 +51,7 @@ public:
     modelTime_t m_startTime = 0;
     std::vector<modelTime_t> m_lapVec = {};
     modelTime_t m_stopTime = 0;
+    std::mutex m_mtx;
 };
 
 class Timer
@@ -56,6 +63,7 @@ public:
 public:
     modelTime_t m_startTime = 0;
     modelTime_t m_alarmTime = 0;
+    std::mutex m_mtx;
 };
 
 #endif

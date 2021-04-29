@@ -1,19 +1,22 @@
 #include "packageQueue.hpp"
 
-PackageQueue::PackageQueue(dataVolume_t volume, QueuePushRule pushRule, QueuePopRule popRule, QueueDropRule dropRule)
+#include "statistic.hpp"
+
+PackageQueue::PackageQueue(hostAddress_t nodeAddr, dataVolume_t volume, QueuePushRule pushRule, QueuePopRule popRule, QueueDropRule dropRule)
     : m_totalVolume(volume * 1e6),
       m_pushRule(pushRule),
       m_popRule(popRule),
-      m_dropRule(dropRule)
+      m_dropRule(dropRule),
+      m_nodeAddr(nodeAddr)
 {
 }
 
 status_t PackageQueue::push(packagePtr_t package)
 {
     status_t status = ERROR_OK;
+    std::lock_guard<std::mutex> lock(m_mtx);
 
     EXIT_IF(package == nullptr, ERROR_NO_EFFECT);
-
     EXIT_IF(m_totalVolume < package->volume || package->volume == 0, ERROR_NO_EFFECT);
     {
         dataVolume_t vol = volume();
@@ -23,7 +26,9 @@ status_t PackageQueue::push(packagePtr_t package)
             EXIT_IF(status == ERROR_NO_EFFECT, ERROR_NO_EFFECT);
         }
 
+        package->inQueue = Time::instance().get();
         RUN(insert(std::move(package)));
+        m_gotPackets++;
     }
 
 exit:
@@ -33,6 +38,7 @@ exit:
 packagePtr_t PackageQueue::pop()
 {
     packagePtr_t pack = nullptr;
+    std::lock_guard<std::mutex> lock(m_mtx);
     if (m_queue.size() == 0)
     {
         return pack;
@@ -64,7 +70,18 @@ packagePtr_t PackageQueue::pop()
     }
     }
 
+    pack->outQueue = Time::instance().get();
     return pack;
+}
+
+int PackageQueue::getTotal()
+{
+    return  m_gotPackets;
+}
+
+int PackageQueue::getDrops()
+{
+    return  m_dropPackets;
 }
 
 dataVolume_t PackageQueue::volume()
@@ -122,10 +139,18 @@ status_t PackageQueue::drop(dataVolume_t volumeToReclaim)
     {
     case QueueDropRule::LAST:
     {
-        m_queue.erase(m_queue.begin(), (std::remove_if(m_queue.rbegin(), m_queue.rend(), [&reclaimedVol, volumeToReclaim](auto &ex) {
+        m_queue.erase(m_queue.begin(), (std::remove_if(m_queue.rbegin(), m_queue.rend(), [&reclaimedVol, volumeToReclaim, this](auto &ex) {
                                             if (reclaimedVol <= volumeToReclaim)
                                             {
                                                 reclaimedVol += ex->volume;
+                                                ex->outSystem = Time::instance().get();
+                                                ex->outQueue = Time::instance().get();
+                                                ex->inProcess = Time::instance().get();
+                                                ex->outProcess = Time::instance().get();
+                                                ex->isReached = false;
+                                                ex->lastNode = m_nodeAddr;
+                                                Statistic::instance().report(std::move(ex));
+                                                m_dropPackets++;
                                                 return true;
                                             }
                                             return false;

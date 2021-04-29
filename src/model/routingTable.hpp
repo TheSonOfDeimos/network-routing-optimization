@@ -17,13 +17,14 @@ enum class AlgorithmType : int
     BELLMAN_FORD
 };
 
+// Thread-safe
 class RoutingTable
 {
 public:
     RoutingTable() = default;
 
     Route get(hostAddress_t src, hostAddress_t dest) const;
-    status_t buildRoutes(AlgorithmType type, const std::map<hostAddress_t, std::shared_ptr<Node>>& nodes);
+    status_t buildRoutes(AlgorithmType type, int maxPathLength, const std::map<hostAddress_t, std::shared_ptr<Node>>& nodes);
 
 private:
     ConnectMatrix_t hostsToMatrix(const std::map<hostAddress_t, std::shared_ptr<Node>> & nodes);

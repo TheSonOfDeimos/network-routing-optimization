@@ -4,6 +4,7 @@
 #include <map>
 
 #include "types.hpp"
+#include "time.hpp"
 
 class UnitBase;
 
@@ -12,7 +13,7 @@ class CoreBase
 public :
     virtual ~CoreBase() = default;
 
-    virtual status_t start() = 0;
+    virtual status_t start(modelTime_t duration) = 0;
     virtual status_t stop() = 0;
 
     // Unit usage

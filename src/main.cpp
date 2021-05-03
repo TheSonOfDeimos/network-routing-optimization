@@ -1,13 +1,16 @@
 #include <iostream>
 
-#include "model/modelCore.hpp"
+#include <QApplication>
 
-int main()
+#include "model/modelCore.hpp"
+#include "gui/mainwindow.hpp"
+
+int main(int argc, char *argv[])
 {
 
     status_t status = ERROR_OK;
 
-    int switchCount = 5;
+    int switchCount = 4;
     int maxPathLength = 6;
     TopologyType topologyType = TopologyType::D_CELL;
     AlgorithmType algorithmType = AlgorithmType::BELLMAN_FORD;
@@ -17,19 +20,19 @@ int main()
     serverParams.roles.push_back(RoleType::PRODUCER);
     serverParams.roles.push_back(RoleType::CONSUMER);
     serverParams.packageProduceFrequency = 1000000;
-    serverParams.minPackageSize = 100;
-    serverParams.maxPackageSize = 1000;
+    serverParams.minPackageSize = 1500;
+    serverParams.maxPackageSize = 2000;
     
-    ModelCore model;
+    auto model = std::make_shared<ModelCore>();
+    QApplication a(argc, argv);
+    MainWindow w(model);
 
-    RUN(model.buildNetworkTopology(topologyType, switchCount, serverParams, switchParams));
-    RUN(model.buildRoutingTable(algorithmType, maxPathLength));
+    RUN(model->buildNetworkTopology(topologyType, switchCount, serverParams, switchParams));
+    RUN(model->buildRoutingTable(algorithmType, maxPathLength));
 
-    RUN(model.start(g_oneSecond / 10000));
 
-    while (true)
-    {
-    }
+    w.show();
+    status = a.exec();
     
     
 exit:

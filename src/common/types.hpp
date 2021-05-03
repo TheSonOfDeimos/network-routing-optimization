@@ -17,6 +17,7 @@ using status_t = int;
 #define ERROR_UNKNOWN       -1
 #define ERROR_LOGIC         -2
 #define ERROR_RESULT_FALSE  -3
+#define ERROR_FALURE        -4
 
 #define IS_SUCCESS(x)       ((static_cast<status_t>(x)) >= 0)
 #define IS_UNSUCCESS(s)     (!IS_SUCCESS(s))

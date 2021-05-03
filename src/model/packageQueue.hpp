@@ -7,6 +7,8 @@
 #include "types.hpp"
 #include "package.hpp"
 
+class Statistic;
+
 enum class QueuePushRule : int
 {
     FRONT = 0,
@@ -35,14 +37,13 @@ enum class QueueDropRule : int
 class PackageQueue
 {
 public:
-    PackageQueue(hostAddress_t nodeAddr, dataVolume_t volume, QueuePushRule pushRule = QueuePushRule::BACK, QueuePopRule popRule = QueuePopRule::FRONT, QueueDropRule dropRule = QueueDropRule::LAST);
+    PackageQueue(std::shared_ptr<Statistic> stat, hostAddress_t nodeAddr, dataVolume_t volume, QueuePushRule pushRule = QueuePushRule::BACK, QueuePopRule popRule = QueuePopRule::FRONT, QueueDropRule dropRule = QueueDropRule::LAST);
 
     status_t push(packagePtr_t package);
     packagePtr_t pop();
 
-    int getTotal();
-    int getDrops();
-
+    double getPacketLoss();
+    double getPing();
 
 private:
     dataVolume_t volume();
@@ -56,10 +57,12 @@ private:
     QueueDropRule m_dropRule;
     std::list<packagePtr_t> m_queue;
     hostAddress_t m_nodeAddr;
+    std::shared_ptr<Statistic> m_statistic;
     std::mutex m_mtx;
 
-    int m_gotPackets;
-    int m_dropPackets;
+    std::vector<bool> m_drops; // vector of size m_measureFrame, true - packet droped, false - packet not droped
+    std::vector<double> m_pings; // vector of size m_measureFrame with pings of every packet
+    int m_measureFrame = 100;
 };
 
 #endif

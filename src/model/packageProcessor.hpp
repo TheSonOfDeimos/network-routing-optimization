@@ -20,13 +20,17 @@ public:
     bool isReady();
     packagePtr_t pop();
 
+    double getSpeed(); // Mbit/sec
+
 private:
     const double m_bandwidth; // bit/picosec
     packagePtr_t m_currentPackage;
     modelTime_t m_processingTime;
     Timer m_timer;
+    std::vector<double> m_speeds;
 
     std::mutex m_mtx;
+    int m_measureFrame = 100;
 };
 
 #endif

@@ -31,7 +31,7 @@ public:
 private:
     modelTime_t m_time = 0;
     modelTime_t m_timePrev = 0;
-    modelTime_t m_timeStep = 1000;
+    modelTime_t m_timeStep = 100000;
     std::mutex m_mtx;
 };
 

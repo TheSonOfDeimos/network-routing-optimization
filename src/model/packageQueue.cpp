@@ -1,13 +1,16 @@
 #include "packageQueue.hpp"
 
+#include  <numeric>
+
 #include "statistic.hpp"
 
-PackageQueue::PackageQueue(hostAddress_t nodeAddr, dataVolume_t volume, QueuePushRule pushRule, QueuePopRule popRule, QueueDropRule dropRule)
+PackageQueue::PackageQueue(std::shared_ptr<Statistic> stat, hostAddress_t nodeAddr, dataVolume_t volume, QueuePushRule pushRule, QueuePopRule popRule, QueueDropRule dropRule)
     : m_totalVolume(volume * 1e6),
       m_pushRule(pushRule),
       m_popRule(popRule),
       m_dropRule(dropRule),
-      m_nodeAddr(nodeAddr)
+      m_nodeAddr(nodeAddr),
+      m_statistic(stat)
 {
 }
 
@@ -28,7 +31,6 @@ status_t PackageQueue::push(packagePtr_t package)
 
         package->inQueue = Time::instance().get();
         RUN(insert(std::move(package)));
-        m_gotPackets++;
     }
 
 exit:
@@ -71,17 +73,36 @@ packagePtr_t PackageQueue::pop()
     }
 
     pack->outQueue = Time::instance().get();
+    m_pings.push_back((double)(pack->outQueue - pack->inQueue) / g_oneMillisecond);
+    if (m_pings.size() > (std::size_t)m_measureFrame) m_pings.erase(m_pings.begin());
+    m_drops.push_back(false);
+    if (m_drops.size() > (std::size_t)m_measureFrame) m_drops.erase(m_drops.begin());
+
     return pack;
 }
 
-int PackageQueue::getTotal()
+
+double PackageQueue::getPacketLoss()
 {
-    return  m_gotPackets;
+    if (m_drops.size() == 0) return 0;
+    double drop = 0;
+    for (std::size_t i = 0; i < m_drops.size(); i++)
+    {
+        if (m_drops.at(i) == true)
+        {
+            drop++;
+        }
+    }
+    drop = drop / m_drops.size() * 100;
+    return drop;
 }
 
-int PackageQueue::getDrops()
+double PackageQueue::getPing()
 {
-    return  m_dropPackets;
+    if (m_pings.size() == 0) return 0;
+    double ping = std::accumulate(m_pings.begin(), m_pings.end(), 0.0, std::plus<double>());
+    ping /= m_pings.size();
+    return ping;
 }
 
 dataVolume_t PackageQueue::volume()
@@ -149,8 +170,9 @@ status_t PackageQueue::drop(dataVolume_t volumeToReclaim)
                                                 ex->outProcess = Time::instance().get();
                                                 ex->isReached = false;
                                                 ex->lastNode = m_nodeAddr;
-                                                Statistic::instance().report(std::move(ex));
-                                                m_dropPackets++;
+                                                m_statistic->report(std::move(ex));
+                                                m_drops.push_back(true);
+                                                if (m_drops.size() > (std::size_t)m_measureFrame) m_drops.erase(m_drops.begin());
                                                 return true;
                                             }
                                             return false;

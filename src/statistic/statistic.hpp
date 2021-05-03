@@ -3,15 +3,41 @@
 
 #include <thread>
 #include <unordered_map>
-#include <list>
+#include <deque>
 
 #include "types.hpp"
 #include "node.hpp"
 #include "time.hpp"
 #include "package.hpp"
 
-using record_t = std::pair<modelTime_t, NodeCharacteristics>;
-using recordsList_t = std::list<record_t>;
+
+enum class MetricType : int
+{
+    SPEED = 0,
+    PACKET_LOSS,
+    PING
+};
+
+struct Filter
+{
+    std::vector<RoleType> roles;
+    MetricType metric;
+    hostAddress_t addr = -1; // -1 for all nodes
+};
+
+struct Record
+{
+    hostAddress_t addr;
+    double ping; // ms
+    double packetLoss; // amount of lost packets in % per 100 packets
+    double speed; // Mbit/sec
+    std::vector<RoleType> roles;
+};
+
+using record_t = std::pair<modelTime_t, Record>;
+using recordsList_t = std::deque<record_t>;
+using subscriptionCallback = std::function<void(modelTime_t, double)>; // <time, metric value>
+using subId = int;
 
 class Statistic
 {
@@ -20,17 +46,44 @@ public:
     Statistic(const Statistic&) = delete;
     Statistic& operator = (Statistic&) = delete;
 
-    static Statistic &instance();
-
     status_t report(const NodeCharacteristics& params);
     status_t report(packagePtr_t package);
 
-private:
+    status_t subscribe(subId id, subscriptionCallback call, Filter filter);
+    status_t unsubscribe(subId id);
 
+
+private:
+    status_t onNodeReport(const record_t& rec);
+    record_t getAverage(modelTime_t time, const std::vector<hostAddress_t> &hosts);
+
+    bool isValidForTime(modelTime_t time);
+    std::vector<hostAddress_t> requiredHosts(const Filter& filter);
+
+    bool isReportSameSize();
+
+
+private:
     std::unordered_map<hostAddress_t, recordsList_t> m_nodeReports;
-    recordsList_t m_averageReports;
+
+    recordsList_t m_avgProvider;
+    recordsList_t m_avgProducer;
+    recordsList_t m_avgConsumer;
+
+    recordsList_t m_avgProviderProducer;
+    recordsList_t m_avgProviderConsumer;
+    recordsList_t m_avgProducerConsumer;
+
+    recordsList_t m_avgProviderProducerConsumer;
+    recordsList_t m_avgAll;
+
+    std::list<packagePtr_t> m_packagesBin;
+
+    std::map<subId, std::pair<subscriptionCallback, Filter>> m_subscribers;
 
     std::mutex m_mtx;
+
+
 };
 
 #endif

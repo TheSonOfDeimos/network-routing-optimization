@@ -1,5 +1,7 @@
 #include "packageProcessor.hpp"
 
+#include <numeric>
+
 PackageProcessor::PackageProcessor(double bandwidth)
     : m_bandwidth(bandwidth / 1e6)
 {
@@ -38,6 +40,17 @@ packagePtr_t PackageProcessor::pop()
         return nullptr;
     }
 
-    m_currentPackage->outProcess = Time::instance().get();
+    m_currentPackage->outProcess = Time::instance().get();    
+    m_speeds.push_back(((m_currentPackage->volume * 8) / (double)(m_currentPackage->outProcess - m_currentPackage->inQueue)) * 1e6);
+    if (m_speeds.size() > (std::size_t)m_measureFrame) m_speeds.erase(m_speeds.begin());
     return std::move(m_currentPackage);
+}
+
+double PackageProcessor::getSpeed()
+{
+    std::lock_guard<std::mutex> lock(m_mtx);
+    if (m_speeds.size() == 0) return m_bandwidth;
+    auto speed = std::accumulate(m_speeds.begin(), m_speeds.end(), 0.0, std::plus<double>());
+    speed /= m_speeds.size();
+    return speed;
 }

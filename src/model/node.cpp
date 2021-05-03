@@ -11,13 +11,14 @@ hostAddress_t NodeCharacteristics::dhcp()
 
 std::shared_ptr<NodeContainer>  Node::m_nodeContainer;
 
-Node::Node(const NodeCharacteristics &ch, std::shared_ptr<RoutingTable> table)
+Node::Node(const NodeCharacteristics &ch, std::shared_ptr<RoutingTable> table, std::shared_ptr<Statistic> stat)
     : UnitBase(),
       m_table(table),
-      m_params(ch)
+      m_params(ch),
+      m_statistic(stat)
 {
     m_params.addr = NodeCharacteristics::dhcp();
-    m_queue = std::make_unique<PackageQueue>(0, ch.bufferVolume, ch.bufferPushRule, ch.bufferPopRule, ch.bufferDropRule);
+    m_queue = std::make_unique<PackageQueue>(m_statistic, m_params.addr, ch.bufferVolume, ch.bufferPushRule, ch.bufferPopRule, ch.bufferDropRule);
 
     if (m_nodeContainer == nullptr)
     {
@@ -46,13 +47,50 @@ status_t Node::update()
 {
     status_t status = ERROR_OK;
 
-    if (m_behaviourSimulator == nullptr)
+    // If one of roles is producer
+    if (std::find(m_params.roles.begin(), m_params.roles.end(), RoleType::PRODUCER) != m_params.roles.end())
     {
-        m_behaviourSimulator = std::make_unique<BehaviourSimulator>(shared_from_this());
+        if (m_timer.isTimerElapsed())
+        {
+            auto newPackage = generatePackage();
+            RUN(receive(std::move(newPackage)));
+            m_timer.setTimer(g_oneSecond / m_params.packageProduceFrequency);
+        }
+    }
+
+    for (auto& processor : m_processorVec)
+    {
+        if (processor->isReady())
+        {
+            auto package = processor->pop();
+
+            if (package != nullptr)
+            {
+                // This node is destination and role consumer
+                if (package->destination == m_params.addr && std::find(m_params.roles.begin(), m_params.roles.end(), RoleType::CONSUMER) != m_params.roles.end())
+                {
+                    package->outSystem = Time::instance().get();
+                    package->isReached = true;
+                    package->lastNode = m_params.addr;
+                    RUN(m_statistic->report(std::move(package)));
+                }
+                // This m_node is provider
+                else if (package->destination != m_params.addr && std::find(m_params.roles.begin(), m_params.roles.end(), RoleType::PROVIDER) != m_params.roles.end())
+                {
+                    RUN(send(std::move(package)));
+                }
+                else
+                {
+                    EXIT(ERROR_LOGIC);
+                }
+            }
+
+            RUN(processor->push(m_queue->pop()));
+        }
     }
     
-    RUN(m_behaviourSimulator->act());
-    Statistic::instance().report(m_params);
+    RUN(updateMetrics());
+    RUN(m_statistic->report(m_params));
 
 exit:
     return status;
@@ -63,17 +101,6 @@ status_t Node::send(packagePtr_t pack)
     status_t status = ERROR_OK;
 
     EXIT_IF(pack == nullptr, ERROR_NO_EFFECT);
-
-    // This node is destination
-    if (pack->destination == m_params.addr)
-    {
-        pack->outSystem = Time::instance().get();
-        pack->isReached = true;
-        pack->lastNode = m_params.addr;
-        Statistic::instance().report(std::move(pack));
-        EXIT(ERROR_OK);
-    }
-
     {
         Route route = m_table.lock()->get(pack->source, pack->destination);
         auto self = std::find(route.path.begin(), route.path.end(), m_params.addr);
@@ -168,9 +195,28 @@ status_t Node::updateMetrics()
 {
     status_t status = ERROR_OK;
 
-    m_params.packetsTotaly = m_queue->getTotal();
-    m_params.packetsDropped = m_queue->getDrops();
-    m_params.packetLoss = m_params.packetsTotaly / m_params.packetsDropped * 100;
+
+    m_params.ping = m_queue->getPing();
+    m_params.packetLoss = m_queue->getPacketLoss();
+
+    m_params.speed = 0;
+    for (auto& proc : m_processorVec)
+    {
+       m_params.speed += proc->getSpeed();
+    }
+    m_params.speed /= m_processorVec.size();
 
     return status;
+}
+
+packagePtr_t Node::generatePackage()
+{
+    std::srand(std::time(nullptr));
+    dataVolume_t volume = m_params.minPackageSize + (std::rand() % (m_params.maxPackageSize - m_params.minPackageSize + 1)); // m_minPackageSize -> m_maxPackageSize
+    hostAddress_t source = m_params.addr;
+    hostAddress_t destination = m_nodeContainer->getRandom(RoleType::CONSUMER)->m_params.addr;
+
+    auto pkg = std::make_unique<Package>(source, destination, volume);
+    pkg->inSystem = Time::instance().get();
+    return pkg;
 }

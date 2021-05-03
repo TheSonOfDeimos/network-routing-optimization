@@ -6,15 +6,25 @@ set(CMAKE_CXX_FLAGS  -Werror)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DEBUG")
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt5PrintSupport REQUIRED)
+
 set(SRC_DIR src/)
 set(SRC_MODEL src/model)
 set(SRC_COMMON src/common)
 set(SRC_CORE src/core)
 set(SRC_ALGORITHM src/algorithm)
 set(SRC_STATISTIC src/statistic)
+set(SRC_GUI src/gui)
+set(SRC_QCUSTOMPLOT 3party/qcustomplot)
 
 set(CXX_HEADER_FILENAME "/*.hpp")
 set(CXX_SOURCE_FILENAME "/*.cpp")
+set(QT_GUI_FILENAME "/*.ui")
 
 include_directories(${SRC_DIR}/model)
 include_directories(${SRC_DIR}/common)
@@ -22,6 +32,8 @@ include_directories(${SRC_DIR}/core)
 include_directories(${SRC_DIR}/common)
 include_directories(${SRC_DIR}/algorithm)
 include_directories(${SRC_DIR}/statistic)
+include_directories(${SRC_DIR}/gui)
+include_directories(3party)
 
 file(GLOB PROJECT_SRC 
         ${SRC_DIR}${CXX_SOURCE_FILENAME}
@@ -35,6 +47,13 @@ file(GLOB PROJECT_SRC
         ${SRC_ALGORITHM}${CXX_SOURCE_FILENAME}
         ${SRC_ALGORITHM}${CXX_HEADER_FILENAME}
         ${SRC_STATISTIC}${CXX_HEADER_FILENAME}
-        ${SRC_STATISTIC}${CXX_SOURCE_FILENAME})
+        ${SRC_STATISTIC}${CXX_SOURCE_FILENAME}
+        ${SRC_GUI}${CXX_HEADER_FILENAME}
+        ${SRC_GUI}${CXX_SOURCE_FILENAME}
+        ${SRC_GUI}${QT_GUI_FILENAME}
+        ${SRC_QCUSTOMPLOT}${CXX_HEADER_FILENAME}
+        ${SRC_QCUSTOMPLOT}${CXX_SOURCE_FILENAME})
 
 add_executable(network-routing-optimization ${PROJECT_SRC})
+
+target_link_libraries(network-routing-optimization Qt5::Widgets Qt5::PrintSupport)

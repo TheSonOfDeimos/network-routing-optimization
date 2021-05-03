@@ -1,6 +1,8 @@
 #include "topologyBuilder.hpp"
 
-TopologyBuilder::nodeMap_t TopologyBuilder::build(TopologyType type, std::shared_ptr<RoutingTable> table, int switchCount, const NodeCharacteristics& serverParams, const NodeCharacteristics& switchParams)
+#include "statistic.hpp"
+
+TopologyBuilder::nodeMap_t TopologyBuilder::build(TopologyType type, std::shared_ptr<RoutingTable> table, int switchCount, const NodeCharacteristics& serverParams, const NodeCharacteristics& switchParams, std::shared_ptr<Statistic> statistic)
 {
     status_t status = ERROR_OK;
 
@@ -10,7 +12,7 @@ TopologyBuilder::nodeMap_t TopologyBuilder::build(TopologyType type, std::shared
     {
     case TopologyType::D_CELL:
     {
-        nodeMap = buildDCell(table, switchCount, serverParams, switchParams);
+        nodeMap = buildDCell(table, switchCount, serverParams, switchParams, statistic);
         break;
     }
     case TopologyType::B_CUBE:
@@ -39,7 +41,7 @@ exit:
     return nodeMap;
 }
 
-TopologyBuilder::nodeMap_t TopologyBuilder::buildDCell(std::shared_ptr<RoutingTable> table, int switchCount, const NodeCharacteristics& serverParams, const NodeCharacteristics& switchParams)
+TopologyBuilder::nodeMap_t TopologyBuilder::buildDCell(std::shared_ptr<RoutingTable> table, int switchCount, const NodeCharacteristics& serverParams, const NodeCharacteristics& switchParams, std::shared_ptr<Statistic> statistic)
 {
     using nodesVector_t = std::vector<std::shared_ptr<Node>>;
     using nodesCellsVector_t = std::vector<nodesVector_t>;
@@ -54,7 +56,7 @@ TopologyBuilder::nodeMap_t TopologyBuilder::buildDCell(std::shared_ptr<RoutingTa
 
     for (int i = 0; i < switchCount; i++)
     {
-        auto node = std::make_shared<Node>(switchParams, table);
+        auto node = std::make_shared<Node>(switchParams, table, statistic);
         nodeMap.insert({node->getNodeCharacteristics().addr, node});
         switchNodeVec.push_back(node);
     }
@@ -64,7 +66,7 @@ TopologyBuilder::nodeMap_t TopologyBuilder::buildDCell(std::shared_ptr<RoutingTa
         computingNodesCellsVec.push_back({});
         for (int i = 0; i < nodesPerCell; i++)
         {
-            auto node = std::make_shared<Node>(serverParams, table);
+            auto node = std::make_shared<Node>(serverParams, table, statistic);
             nodeMap.insert({node->getNodeCharacteristics().addr, node});
             computingNodesCellsVec.at(s).push_back(node);
         }

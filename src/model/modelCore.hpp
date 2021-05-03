@@ -6,9 +6,11 @@
 #include <memory>
 
 #include "core.hpp"
-#include "routingTable.hpp"
-#include "node.hpp"
 #include "topologyBuilder.hpp"
+#include "routingTable.hpp"
+
+class Statistic;
+class Node;
 
 class ModelCore : public CoreBase
 {
@@ -23,15 +25,18 @@ public:
     template <class... Args>
     status_t buildRoutingTable(AlgorithmType type, int maxPathLength, Args &...args);
 
+    std::shared_ptr<Statistic> getStatisticModule();
+
 private:
     status_t run(modelTime_t duration);
 
 private:
     std::map<hostAddress_t, std::shared_ptr<Node>> m_nodesVec;
     std::shared_ptr<RoutingTable> m_table;
+    std::shared_ptr<Statistic> m_statistic;
     std::mutex m_mtx;
     std::atomic<bool> m_isRunning;
-    std::future<status_t> m_runningFut;
+    std::thread m_thr;
     
 };
 

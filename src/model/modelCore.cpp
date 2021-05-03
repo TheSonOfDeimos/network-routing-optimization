@@ -2,16 +2,20 @@
 
 #include "unitBase.hpp"
 #include "time.hpp"
+#include "statistic.hpp"
+#include "node.hpp"
 
 ModelCore::ModelCore()
+    : m_isRunning(false)
 {
     m_table = std::make_shared<RoutingTable>();
+    m_statistic = std::make_shared<Statistic>();
 }
 
 status_t ModelCore::start(modelTime_t duration)
 {
-    m_runningFut = std::async(std::launch::async, &ModelCore::run, this, duration);
-    return m_runningFut.valid() == true ? 0 : -1;
+    m_thr = std::thread(&ModelCore::run, this, duration);
+    return m_thr.joinable() == true ? ERROR_OK : ERROR_FALURE;
 }
 
 status_t ModelCore::stop()
@@ -19,11 +23,12 @@ status_t ModelCore::stop()
     if (m_isRunning)
     {
         m_isRunning = false;
-        return m_runningFut.get();
+        m_thr.join();
+        return ERROR_OK;
     }
     else
     {
-        return -2;
+        return ERROR_LOGIC;
     }
 }
 
@@ -33,12 +38,17 @@ status_t ModelCore::buildNetworkTopology(TopologyType type, int switchCount, con
 
     std::lock_guard<std::mutex> lock(m_mtx);
 
-    m_nodesVec = TopologyBuilder::build(type, m_table, switchCount, serverParams, switchParams);
+    m_nodesVec = TopologyBuilder::build(type, m_table, switchCount, serverParams, switchParams, m_statistic);
 
     EXIT_IF(m_nodesVec.size() == 0, ERROR_LOGIC);
 
 exit:
     return status;
+}
+
+std::shared_ptr<Statistic> ModelCore::getStatisticModule()
+{
+    return m_statistic;
 }
 
 status_t ModelCore::run(modelTime_t duration)

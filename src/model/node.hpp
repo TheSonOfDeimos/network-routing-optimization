@@ -18,6 +18,9 @@
 class RoutingTable;
 class Statistic;
 
+
+bool operator == (const std::vector<RoleType>& l, const std::vector<RoleType>& r);
+
 struct NodeCharacteristics
 {
     hostAddress_t addr = -1;

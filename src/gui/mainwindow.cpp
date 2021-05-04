@@ -16,10 +16,7 @@ MainWindow::MainWindow(std::shared_ptr<ModelCore> model, QWidget *parent) :
 {
     ui->setupUi(this);
 
-    m_staticWidgets.emplace_back(new StatisticWidget(m_model->getStatisticModule()));
-    m_confWidget = new ConfigurationWidget();
-
-    ui->m_graphTab->layout()->addWidget(m_staticWidgets.back());
+    ui->m_graphTab->layout()->addWidget(new StatisticWidget(m_model->getStatisticModule()));
 }
 
 MainWindow::~MainWindow()
@@ -29,19 +26,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_m_addGraphButton_clicked()
 {
-    m_staticWidgets.emplace_back(new StatisticWidget(m_model->getStatisticModule()));
-    ui->tabWidget->addTab(m_staticWidgets.back(), "Graph " + QString::number(m_staticWidgets.back()->getId()));
+    auto sw = new StatisticWidget(m_model->getStatisticModule());
+    ui->tabWidget->addTab(sw, "Graph " + QString::number(sw->getId()));
 }
 
 void MainWindow::on_m_removeGraphButton_clicked()
-{
-    auto graphToRemove = ui->tabWidget->widget(ui->tabWidget->currentIndex());
-    if (qobject_cast<StatisticWidget*>(graphToRemove) != nullptr)
-    {
-        m_staticWidgets.erase(std::find(m_staticWidgets.begin(), m_staticWidgets.end(), graphToRemove));
-        ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
-    }
-
+{    
+    auto sw = ui->tabWidget->currentWidget();
+    ui->tabWidget->removeTab(ui->tabWidget->currentIndex());
+    sw->deleteLater();
 }
 
 void MainWindow::on_m_startButton_clicked()

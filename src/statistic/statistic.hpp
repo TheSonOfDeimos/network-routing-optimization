@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <unordered_map>
+#include <map>
 #include <deque>
 
 #include "types.hpp"
@@ -37,6 +38,7 @@ struct Record
 using record_t = std::pair<modelTime_t, Record>;
 using recordsList_t = std::deque<record_t>;
 using subscriptionCallback = std::function<void(modelTime_t, double)>; // <time, metric value>
+using addAllDataCallback = std::function<void(const std::vector<double>&, const std::vector<double>&)>; // <time, metric value>
 using subId = int;
 
 class Statistic
@@ -49,19 +51,16 @@ public:
     status_t report(const NodeCharacteristics& params);
     status_t report(packagePtr_t package);
 
-    status_t subscribe(subId id, subscriptionCallback call, Filter filter);
+    status_t subscribe(subId id, subscriptionCallback call, addAllDataCallback addAll, const Filter& filter);
     status_t unsubscribe(subId id);
-
 
 private:
     status_t onNodeReport(const record_t& rec);
-    record_t getAverage(modelTime_t time, const std::vector<hostAddress_t> &hosts);
-
-    bool isValidForTime(modelTime_t time);
-    std::vector<hostAddress_t> requiredHosts(const Filter& filter);
-
     bool isReportSameSize();
 
+    record_t countLastAverage(const std::vector<RoleType>& roles);
+
+    recordsList_t *get(const Filter& filter);
 
 private:
     std::unordered_map<hostAddress_t, recordsList_t> m_nodeReports;

@@ -34,6 +34,7 @@ private slots:
 
 private:
     void subscriptionCallback(modelTime_t time, double value);
+    void addAllData(const std::vector<double> &time, const std::vector<double> &value);
     void filterChanged();
 
 private:

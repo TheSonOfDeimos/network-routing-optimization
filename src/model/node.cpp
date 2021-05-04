@@ -1,7 +1,30 @@
 #include "node.hpp"
 
+#include <iostream>
+
 #include "routingTable.hpp"
 #include "statistic.hpp"
+
+bool operator == (const std::vector<RoleType>& l, const std::vector<RoleType>& r)
+{
+    try
+    {
+        if (l.size() != r.size()) return false;
+        if (l.empty() && r.empty()) return true;
+        if (l.size() == 3 && r.size() == 3) return true;
+
+        if (l.size() == 1 && r.size() == 1 && l.front() == r.front()) return true;
+        else return false;
+
+        if ((l.at(0) == r.at(0) || l.at(0) == r.at(1)) && (l.at(1) == r.at(0) || l.at(1) == r.at(1))) return true;
+        else return false;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what();
+    }
+    return false;
+}
 
 hostAddress_t NodeCharacteristics::dhcp()
 {

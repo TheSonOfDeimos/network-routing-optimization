@@ -1,16 +1,18 @@
-#include "bellmanFord.hpp"
+#include "dijikstra.hpp"
 
 #include <unordered_map>
 #include <vector>
 
 #include "types.hpp"
 
-BellmanFord::BellmanFord(int maxPathLength, double, double, double)
+Dijikstra::Dijikstra(int maxPathLength, double, double, double)
     : m_maxPathLength(maxPathLength)
 {
+
 }
 
-status_t BellmanFord::adoptStartMatrix(ConnectMatrix_t &startMatrix)
+
+status_t Dijikstra::adoptStartMatrix(ConnectMatrix_t &startMatrix)
 {
     status_t status = ERROR_OK;
 
@@ -19,7 +21,7 @@ status_t BellmanFord::adoptStartMatrix(ConnectMatrix_t &startMatrix)
         for (auto &element : line.second)
         {
             EXIT_IF(element.second.cost != -1, ERROR_LOGIC);
-            element.second.cost = 1;
+            element.second.cost = 0;
         }
     }
 
@@ -27,7 +29,7 @@ exit:
     return status;
 }
 
-status_t BellmanFord::isPathPossible(hostAddress_t startLineAddr, const std::pair<hostAddress_t, Cell> &startElement, hostAddress_t prevLineAddr, const std::pair<hostAddress_t, Cell> &prevElement)
+status_t Dijikstra::isPathPossible(hostAddress_t startLineAddr, const std::pair<hostAddress_t, Cell> &startElement, hostAddress_t prevLineAddr, const std::pair<hostAddress_t, Cell> &prevElement)
 {
     status_t status = ERROR_RESULT_TRUE;
 
@@ -45,7 +47,7 @@ status_t BellmanFord::isPathPossible(hostAddress_t startLineAddr, const std::pai
         std::set_intersection(se.begin(), se.end(),
                               pe.begin(), pe.end(),
                               std::back_inserter(intersect));
-        
+
         EXIT_IF(intersect.size() > 1, ERROR_RESULT_FALSE);
     }
 
@@ -53,20 +55,21 @@ exit:
     return status;
 }
 
-status_t BellmanFord::appentToNextMatrix(hostAddress_t startLineAddr, const std::pair<hostAddress_t, Cell>& startElement, hostAddress_t prevLineAddr, const std::pair<hostAddress_t, Cell>& prevElement, ConnectMatrix_t& nextMatrix)
+
+status_t Dijikstra::appentToNextMatrix(hostAddress_t startLineAddr, const std::pair<hostAddress_t, Cell> &startElement, hostAddress_t prevLineAddr, const std::pair<hostAddress_t, Cell> &prevElement, ConnectMatrix_t &nextMatrix)
 {
     status_t status = ERROR_OK;
 
     Cell newCell = prevElement.second;
     newCell.path.push_back(startElement.first);
-    newCell.cost++;
+    newCell.cost = prevElement.second.cost + 1 / startElement.second.bandwidth;
     nextMatrix[prevLineAddr][startElement.first] = newCell;
 
 exit:
     return status;
 }
 
-RouteTable_t BellmanFord::mergeMatrixToRouteTable(const std::vector<ConnectMatrix_t> &matrixVec)
+RouteTable_t Dijikstra::mergeMatrixToRouteTable(const std::vector<ConnectMatrix_t> &matrixVec)
 {
     RouteTable_t table;
 
@@ -84,5 +87,11 @@ RouteTable_t BellmanFord::mergeMatrixToRouteTable(const std::vector<ConnectMatri
             }
         }
     }
+
+    std::sort(table.begin(), table.end(), [](Route& cell_1, Route& cell_2)
+    {
+        return cell_1.cost < cell_2.cost;
+    });
+
     return table;
 }

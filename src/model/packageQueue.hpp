@@ -62,7 +62,7 @@ private:
 
     std::vector<bool> m_drops; // vector of size m_measureFrame, true - packet droped, false - packet not droped
     std::vector<double> m_pings; // vector of size m_measureFrame with pings of every packet
-    int m_measureFrame = 100;
+    int m_measureFrame = 4000;
 };
 
 #endif

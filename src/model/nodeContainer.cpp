@@ -2,6 +2,11 @@
 
 #include "node.hpp"
 
+NodeContainer::NodeContainer()
+{
+    std::srand(std::time(nullptr));
+}
+
 status_t NodeContainer::add(Node* node, hostAddress_t addr, const std::vector<RoleType>& roles)
 {
     status_t status = ERROR_OK;
@@ -85,19 +90,31 @@ std::shared_ptr<Node> NodeContainer::getRandom()
     return iter->second->shared_from_this();
 }
 
-std::shared_ptr<Node> NodeContainer::getRandom(RoleType role)
+std::shared_ptr<Node> NodeContainer::getRandom(RoleType role, hostAddress_t excepAddr)
 {
     std::lock_guard<std::mutex> lock(m_mtx);
     
     auto range = m_nodesByRole.equal_range(role);
     int size = std::distance(range.first, range.second);
 
-    std::srand(std::time(nullptr));
     int randomIndex = std::rand() % size; // 0 - size
     auto iter = range.first;
+    auto iterPrev = range.first;
     for (int i = 0; i < randomIndex; i++)
     {
+        iterPrev = iter;
         iter++;
+    }
+
+
+
+    if (iter->second->getNodeCharacteristics().addr == excepAddr)
+    {
+        iter++;
+        if (iter == range.second)
+        {
+            iter = iterPrev;
+        }
     }
 
     return iter->second->shared_from_this();

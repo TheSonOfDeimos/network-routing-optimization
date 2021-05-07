@@ -22,14 +22,9 @@ public:
 private slots:
 
     void on_m_addGraphButton_clicked();
-
     void on_m_removeGraphButton_clicked();
-
     void on_m_startButton_clicked();
-
     void on_m_stopButton_clicked();
-
-    void on_m_restartButton_clicked();
 
 private:
     Ui::MainWindow *ui;

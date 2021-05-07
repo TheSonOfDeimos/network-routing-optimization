@@ -30,7 +30,7 @@ private:
     std::vector<double> m_speeds;
 
     std::mutex m_mtx;
-    int m_measureFrame = 100;
+    int m_measureFrame = 3000;
 };
 
 #endif

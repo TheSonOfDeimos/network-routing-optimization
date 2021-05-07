@@ -1,12 +1,13 @@
-#ifndef BELLMAN_FORD_HPP
-#define BELLMAN_FORD_HPP
+#ifndef DIJIKSTRA_HPP
+#define DIJIKSTRA_HPP
 
 #include "algorithmBase.hpp"
 
-class BellmanFord : public AlgorithmBase
+class Dijikstra : public AlgorithmBase
 {
 public:
-    BellmanFord(int maxPathLength, double, double, double);
+    Dijikstra(int maxPathLength, double, double, double);
+
 private:
     status_t adoptStartMatrix(ConnectMatrix_t& startMatrix) override;
     status_t isPathPossible(hostAddress_t startLineAddr, const std::pair<hostAddress_t, Cell>& startElement, hostAddress_t prevLineAddr, const std::pair<hostAddress_t, Cell>& prevElement) override;

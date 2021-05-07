@@ -3,6 +3,7 @@
 
 #include "types.hpp"
 #include "time.hpp"
+#include "algorithmBase.hpp"
 
 struct Package
 {
@@ -15,6 +16,8 @@ struct Package
     Priority priority = Priority::NONE;
     ttl_t ttl = INT32_MAX;
     packageId_t id;
+
+    std::vector<hostAddress_t> path = {};
 
     // Status
     modelTime_t inQueue = 0;

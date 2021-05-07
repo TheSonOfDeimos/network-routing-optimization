@@ -7,12 +7,14 @@
 #include <map>
 
 #include "types.hpp"
-#include "algorithmBase.hpp"
 #include "node.hpp"
+#include "bellmanFord.hpp"
+#include "deimosV1.hpp"
+#include "dijikstra.hpp"
 
 enum class AlgorithmType : int
 {
-    SCRAT = 0,
+    DEIMOS_V1 = 0,
     DIJKSTRA,
     BELLMAN_FORD
 };
@@ -24,7 +26,8 @@ public:
     RoutingTable() = default;
 
     Route get(hostAddress_t src, hostAddress_t dest) const;
-    status_t buildRoutes(AlgorithmType type, int maxPathLength, const std::map<hostAddress_t, std::shared_ptr<Node>>& nodes);
+    status_t buildRoutes(AlgorithmType type, const std::map<hostAddress_t, std::shared_ptr<Node>>& nodes,
+                         int maxPathLength, double reqSpeed, double reqPacketloss, double reqPing);
 
 private:
     ConnectMatrix_t hostsToMatrix(const std::map<hostAddress_t, std::shared_ptr<Node>> & nodes);

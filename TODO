@@ -1,13 +1,13 @@
 Todo:
   ☐ Topology builder
     ✔  DCell @started(21-04-21 01:30) @done(21-04-23 20:10) @lasted(2d18h40m5s)
-    ☐  BCube
-    ☐  FatTree
-    ☐  Free topology with random connections
+    ✔  BCube @done(21-05-06 22:55)
+    ✔  FatTree @done(21-05-06 22:55)
 
   ☐ Algorithms
-    ☐ Deimos
-    ☐ Dijkstra
+    ✔ Deimos V1 @done(21-05-04 21:33)
+    ☐ Deimos V2
+    ✔ Dijkstra @done(21-05-06 22:55)
     ✔ Bellman-Ford @done(21-04-20 22:23)
 
   ✔ Behaviour simulator @done(21-04-25 17:15)
@@ -28,9 +28,12 @@ Todo:
     ☐ Drop first
     ☐ Drop random
   
-  ☐ Statistics module
-    ☐ Add metrics measurement @started(21-04-26 22:56)
+  ✔ Statistics module @done(21-05-04 17:49)
+    ✔ Add metrics measurement @started(21-04-26 22:56) @done(21-05-04 17:49) @lasted(1w18h53m20s)
 
   ☐ Model Core API
+    ✔ Input params @done(21-05-05 18:08)
+    ☐ New package generation (random in time, random in volume)
+    ☐ Add thread pool
 
-  ☐ GUI
+  ✔ GUI @done(21-05-04 17:49)

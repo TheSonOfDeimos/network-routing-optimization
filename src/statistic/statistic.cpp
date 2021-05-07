@@ -1,5 +1,7 @@
 #include "statistic.hpp"
 
+#include <numeric>
+
 status_t Statistic::report(const NodeCharacteristics &params)
 {
     std::lock_guard<std::mutex> lock(m_mtx);
@@ -25,67 +27,12 @@ status_t Statistic::report(packagePtr_t package)
     std::lock_guard<std::mutex> lock(m_mtx);
 
     m_packagesBin.push_back(std::move(package));
+    onPacketReport(*m_packagesBin.back().get());
     return ERROR_OK;;
-}
-
-
-
-status_t Statistic::subscribe(subId id, subscriptionCallback call, addAllDataCallback addAll, const Filter &filter)
-{
-    status_t status = ERROR_OK;
-
-    std::lock_guard<std::mutex> lock(m_mtx);
-    m_subscribers[id] = {call, filter};
-
-    auto listToSend = get(filter);
-    std::vector<double> time;
-    std::vector<double> value;
-    EXIT_IF(listToSend == nullptr, ERROR_OK);
-
-    for (auto iter = listToSend->begin(); iter != listToSend->end(); iter++)
-    {
-        double metricVal = -1;
-        switch (filter.metric)
-        {
-        case MetricType::SPEED :
-        {
-            metricVal = iter->second.speed;
-            break;
-        }
-        case MetricType::PACKET_LOSS :
-        {
-            metricVal = iter->second.packetLoss;
-            break;
-        }
-        case MetricType::PING :
-        {
-            metricVal = iter->second.ping;
-            break;
-        }
-        }
-
-        time.emplace_back((double)iter->first / g_oneMillisecond);
-        value.emplace_back(metricVal);
-    }
-
-    addAll(time, value);
-
-
-exit:
-    return status;
-}
-
-status_t Statistic::unsubscribe(subId id)
-{
-    std::lock_guard<std::mutex> lock(m_mtx);
-    m_subscribers.erase(id);
-    return ERROR_OK;
 }
 
 status_t Statistic::onNodeReport(const record_t &rec)
 {
-    status_t status = ERROR_OK;
-
     if (isReportSameSize())
     {
         auto avgProvider = countLastAverage({RoleType::PROVIDER});
@@ -101,7 +48,10 @@ status_t Statistic::onNodeReport(const record_t &rec)
         if (avgProviderProducer.second.speed >= 0) m_avgProviderProducer.push_back(avgProviderProducer);
 
         auto avgProviderConsumer = countLastAverage({RoleType::PROVIDER, RoleType::CONSUMER});
-        if (avgProviderConsumer.second.speed >= 0) m_avgProviderConsumer.push_back(avgProviderConsumer);
+        if (avgProviderConsumer.second.speed >= 0)
+        {
+            m_avgProviderConsumer.push_back(avgProviderConsumer);
+        }
 
         auto avgProducerConsumer = countLastAverage({RoleType::PRODUCER, RoleType::CONSUMER});
         if (avgProducerConsumer.second.speed >= 0) m_avgProducerConsumer.push_back(avgProducerConsumer);
@@ -111,79 +61,22 @@ status_t Statistic::onNodeReport(const record_t &rec)
 
         auto avgAll = countLastAverage({});
         if (avgAll.second.speed >= 0) m_avgAll.push_back(avgAll);
-
-        for (auto& sub : m_subscribers)
-        {
-            if (sub.second.second.addr != -1) continue;
-
-            record_t* recToSend = nullptr;
-            if (sub.second.second.roles == std::vector<RoleType>{RoleType::PROVIDER}) recToSend = &avgProvider;
-            else if (sub.second.second.roles == std::vector<RoleType>{RoleType::PRODUCER}) recToSend = &avgProducer;
-            else if (sub.second.second.roles == std::vector<RoleType>{RoleType::CONSUMER}) recToSend = &avgConsumer;
-            else if (sub.second.second.roles == std::vector<RoleType>{RoleType::PROVIDER, RoleType::PRODUCER}) recToSend = &avgProviderProducer;
-            else if (sub.second.second.roles == std::vector<RoleType>{RoleType::PROVIDER, RoleType::CONSUMER}) recToSend = &avgProviderConsumer;
-            else if (sub.second.second.roles == std::vector<RoleType>{RoleType::PRODUCER, RoleType::CONSUMER}) recToSend = &avgProducerConsumer;
-            else if (sub.second.second.roles == std::vector<RoleType>{RoleType::PROVIDER, RoleType::PRODUCER, RoleType::CONSUMER}) recToSend = &avgProviderProducerConsumer;
-            else if (sub.second.second.roles == std::vector<RoleType>{}) recToSend = &avgAll;
-
-            if (recToSend == nullptr) continue;
-            if (recToSend->second.speed < 0) continue;
-
-            double metricVal = -1;
-            switch (sub.second.second.metric)
-            {
-            case MetricType::SPEED :
-            {
-                metricVal = recToSend->second.speed;
-                break;
-            }
-            case MetricType::PACKET_LOSS :
-            {
-                metricVal = recToSend->second.packetLoss;
-                break;
-            }
-            case MetricType::PING :
-            {
-                metricVal = recToSend->second.ping;
-                break;
-            }
-            }
-
-            sub.second.first(rec.first, metricVal);
-
-        }
     }
 
-    for (auto& sub : m_subscribers)
-    {
-        if (sub.second.second.addr == -1) continue;
-        if (sub.second.second.addr != rec.second.addr) continue;
-        if (sub.second.second.roles != rec.second.roles) continue;
+    return ERROR_OK;
+}
 
-        double metricVal = -1;
-        switch (sub.second.second.metric)
-        {
-        case MetricType::SPEED :
-        {
-            metricVal = rec.second.speed;
-            break;
-        }
-        case MetricType::PACKET_LOSS :
-        {
-            metricVal = rec.second.packetLoss;
-            break;
-        }
-        case MetricType::PING :
-        {
-            metricVal = rec.second.ping;
-            break;
-        }
-        }
+status_t Statistic::onPacketReport(const Package &package)
+{
+    if (package.isReached == false) return ERROR_OK;
 
-        sub.second.first(rec.first, metricVal);
-    }
+    m_measurePacketTimeInSystem.push_back(package.outSystem - package.inSystem);
+    if (m_measurePacketTimeInSystem.size() > static_cast<std::size_t>(m_measureFrame)) m_measurePacketTimeInSystem.erase(m_measurePacketTimeInSystem.begin());
 
-exit:
+    modelTime_t avgTimeInSystem = std::accumulate(m_measurePacketTimeInSystem.begin(), m_measurePacketTimeInSystem.end(), (modelTime_t)0, std::plus<modelTime_t>());
+    avgTimeInSystem /= m_measurePacketTimeInSystem.size();
+    m_avgPacketTimeInSystem.emplace_back(package.outSystem, avgTimeInSystem);
+
     return ERROR_OK;
 }
 
@@ -236,11 +129,27 @@ record_t Statistic::countLastAverage(const std::vector<RoleType>& roles)
     return {m_nodeReports.at(hosts.front()).at(index).first, avgLastRec};
 }
 
-recordsList_t* Statistic::get(const Filter &filter)
+std::pair<std::vector<double>, std::vector<double>> Statistic::get(const Filter &filter)
 {
+    std::lock_guard<std::mutex> lock(m_mtx);
+
+    recordsList_t* list = nullptr;
+    std::vector<double> time = {}; // ms
+    std::vector<double> value = {};
+
+    if (filter.metric == MetricType::AVG_PACKAGE_TIME_IN_SYSTEM)
+    {
+        for (auto& ex : m_avgPacketTimeInSystem)
+        {
+            time.emplace_back((double)ex.first / g_oneMillisecond);
+            value.emplace_back((double)ex.second / g_oneMillisecond);
+        }
+        return {time, value};
+    }
+
     if (filter.addr == -1)
     {
-        recordsList_t* list = nullptr;
+
         if (filter.roles == std::vector<RoleType>{RoleType::PROVIDER}) list = &m_avgProvider;
         else if (filter.roles == std::vector<RoleType>{RoleType::PRODUCER}) list = &m_avgProducer;
         else if (filter.roles == std::vector<RoleType>{RoleType::CONSUMER}) list = &m_avgConsumer;
@@ -250,21 +159,50 @@ recordsList_t* Statistic::get(const Filter &filter)
         else if (filter.roles == std::vector<RoleType>{RoleType::PROVIDER, RoleType::PRODUCER, RoleType::CONSUMER}) list = &m_avgProviderProducerConsumer;
         else if (filter.roles == std::vector<RoleType>{}) list = &m_avgAll;
 
-        if (list == nullptr) return nullptr;
-        if (list->size() == 0) return nullptr;
-        return list;
+        if (list == nullptr) return {};
+        if (list->size() == 0) return {};
     }
     else
     {
-        recordsList_t* list = nullptr;
-
         auto iter = m_nodeReports.find(filter.addr);
-        if (iter == m_nodeReports.end()) return nullptr;
+        if (iter == m_nodeReports.end()) return {};
         list = &iter->second;
-        if (list->size() == 0) return nullptr;
-        if (list->front().second.roles != filter.roles) return nullptr;
-        return list;
+        if (list->size() == 0) return {};
+        if (list->front().second.roles != filter.roles) return {};
     }
+
+    for (auto iter = list->begin(); iter != list->end(); iter++)
+    {
+        double metricVal = -1;
+        switch (filter.metric)
+        {
+        case MetricType::SPEED :
+        {
+            metricVal = iter->second.speed;
+            break;
+        }
+        case MetricType::PACKET_LOSS :
+        {
+            metricVal = iter->second.packetLoss;
+            break;
+        }
+        case MetricType::PING :
+        {
+            metricVal = iter->second.ping;
+            break;
+        }
+        case MetricType::AVG_PACKAGE_TIME_IN_SYSTEM :
+        {
+            break;
+        }
+        }
+
+        time.emplace_back((double)iter->first / g_oneMillisecond);
+        value.emplace_back(metricVal);
+    }
+
+    return {time, value};
+
 }
 
 

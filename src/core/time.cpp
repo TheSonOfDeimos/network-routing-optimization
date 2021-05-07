@@ -21,6 +21,13 @@ status_t Time::set(modelTime_t time)
     return true;
 }
 
+status_t Time::setStep(modelTime_t step)
+{
+    std::lock_guard<std::mutex> lock(m_mtx);
+    m_timeStep = step;
+    return ERROR_OK;
+}
+
 status_t Time::tick()
 {
     std::lock_guard<std::mutex> lock(m_mtx);

@@ -16,7 +16,8 @@ enum class MetricType : int
 {
     SPEED = 0,
     PACKET_LOSS,
-    PING
+    PING,
+    AVG_PACKAGE_TIME_IN_SYSTEM
 };
 
 struct Filter
@@ -37,8 +38,6 @@ struct Record
 
 using record_t = std::pair<modelTime_t, Record>;
 using recordsList_t = std::deque<record_t>;
-using subscriptionCallback = std::function<void(modelTime_t, double)>; // <time, metric value>
-using addAllDataCallback = std::function<void(const std::vector<double>&, const std::vector<double>&)>; // <time, metric value>
 using subId = int;
 
 class Statistic
@@ -50,35 +49,31 @@ public:
 
     status_t report(const NodeCharacteristics& params);
     status_t report(packagePtr_t package);
-
-    status_t subscribe(subId id, subscriptionCallback call, addAllDataCallback addAll, const Filter& filter);
-    status_t unsubscribe(subId id);
+    std::pair<std::vector<double>, std::vector<double> > get(const Filter& filter);
 
 private:
     status_t onNodeReport(const record_t& rec);
+    status_t onPacketReport(const Package& package);
     bool isReportSameSize();
-
     record_t countLastAverage(const std::vector<RoleType>& roles);
 
-    recordsList_t *get(const Filter& filter);
-
 private:
+    // Node stat
     std::unordered_map<hostAddress_t, recordsList_t> m_nodeReports;
-
     recordsList_t m_avgProvider;
     recordsList_t m_avgProducer;
     recordsList_t m_avgConsumer;
-
     recordsList_t m_avgProviderProducer;
     recordsList_t m_avgProviderConsumer;
     recordsList_t m_avgProducerConsumer;
-
     recordsList_t m_avgProviderProducerConsumer;
     recordsList_t m_avgAll;
 
+    // Packets stat
     std::list<packagePtr_t> m_packagesBin;
-
-    std::map<subId, std::pair<subscriptionCallback, Filter>> m_subscribers;
+    std::vector<modelTime_t> m_measurePacketTimeInSystem;
+    int m_measureFrame = 200;
+    std::vector<std::pair<modelTime_t, modelTime_t>> m_avgPacketTimeInSystem;
 
     std::mutex m_mtx;
 

@@ -12,13 +12,14 @@ class Node;
 class NodeContainer
 {
 public:
+    NodeContainer();
     status_t add(Node* node, hostAddress_t addr, const std::vector<RoleType>& roles);
     status_t remove(Node* node);
 
     std::shared_ptr<Node> get(hostAddress_t addr);
     std::vector<std::shared_ptr<Node>> get(RoleType role);
     std::shared_ptr<Node> getRandom();
-    std::shared_ptr<Node> getRandom(RoleType role);
+    std::shared_ptr<Node> getRandom(RoleType role, hostAddress_t excepAddr);
 
 private:
     std::unordered_multimap<RoleType, Node*> m_nodesByRole;

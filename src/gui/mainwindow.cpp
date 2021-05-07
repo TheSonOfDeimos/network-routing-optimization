@@ -46,8 +46,3 @@ void MainWindow::on_m_stopButton_clicked()
 {
     m_model->stop();
 }
-
-void MainWindow::on_m_restartButton_clicked()
-{
-
-}

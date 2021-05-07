@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <memory>
 
-#include "bellmanFord.hpp"
-
 Route RoutingTable::get(hostAddress_t src, hostAddress_t dest) const
 {
     auto found = std::find_if(m_table.begin(), m_table.end(), [&src, &dest](auto &route) {
@@ -22,7 +20,8 @@ Route RoutingTable::get(hostAddress_t src, hostAddress_t dest) const
     return *found;
 }
 
-status_t RoutingTable::buildRoutes(AlgorithmType type, int maxPathLength, const std::map<hostAddress_t, std::shared_ptr<Node>> &nodes)
+status_t RoutingTable::buildRoutes(AlgorithmType type, const std::map<hostAddress_t, std::shared_ptr<Node>> &nodes,
+                                   int maxPathLength, double reqSpeed, double reqPacketloss, double reqPing)
 {
     status_t status = ERROR_OK;
     auto matrix = hostsToMatrix(nodes);
@@ -31,19 +30,19 @@ status_t RoutingTable::buildRoutes(AlgorithmType type, int maxPathLength, const 
 
     switch (type)
     {
-    case AlgorithmType::SCRAT:
+    case AlgorithmType::DEIMOS_V1:
     {
-        NOT_IMPLEMENTED_YET;
+        m_algo = std::make_unique<DeimosV1>(maxPathLength, reqSpeed, reqPacketloss, reqPing);
         break;
     }
     case AlgorithmType::DIJKSTRA:
     {
-        NOT_IMPLEMENTED_YET;
+        m_algo = std::make_unique<Dijikstra>(maxPathLength, reqSpeed, reqPacketloss, reqPing);
         break;
     }
     case AlgorithmType::BELLMAN_FORD:
     {
-        m_algo = std::make_unique<BellmanFord>(maxPathLength);
+        m_algo = std::make_unique<BellmanFord>(maxPathLength, reqSpeed, reqPacketloss, reqPing);
         break;
     }
     default:

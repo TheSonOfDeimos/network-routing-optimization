@@ -52,5 +52,6 @@ double PackageProcessor::getSpeed()
     if (m_speeds.size() == 0) return m_bandwidth;
     auto speed = std::accumulate(m_speeds.begin(), m_speeds.end(), 0.0, std::plus<double>());
     speed /= m_speeds.size();
+
     return speed;
 }

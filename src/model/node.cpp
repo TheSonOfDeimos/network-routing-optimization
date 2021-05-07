@@ -12,12 +12,8 @@ bool operator == (const std::vector<RoleType>& l, const std::vector<RoleType>& r
         if (l.size() != r.size()) return false;
         if (l.empty() && r.empty()) return true;
         if (l.size() == 3 && r.size() == 3) return true;
-
         if (l.size() == 1 && r.size() == 1 && l.front() == r.front()) return true;
-        else return false;
-
-        if ((l.at(0) == r.at(0) || l.at(0) == r.at(1)) && (l.at(1) == r.at(0) || l.at(1) == r.at(1))) return true;
-        else return false;
+        if ((l.size() == 2 && r.size() == 2) && ((l.at(0) == r.at(0) && l.at(1) == r.at(1)) || (l.at(1) == r.at(0) && l.at(0) == r.at(1)))) return true;
     }
     catch (std::exception& e)
     {
@@ -40,6 +36,7 @@ Node::Node(const NodeCharacteristics &ch, std::shared_ptr<RoutingTable> table, s
       m_params(ch),
       m_statistic(stat)
 {
+    std::srand(std::time(nullptr));
     m_params.addr = NodeCharacteristics::dhcp();
     m_queue = std::make_unique<PackageQueue>(m_statistic, m_params.addr, ch.bufferVolume, ch.bufferPushRule, ch.bufferPopRule, ch.bufferDropRule);
 
@@ -76,8 +73,9 @@ status_t Node::update()
         if (m_timer.isTimerElapsed())
         {
             auto newPackage = generatePackage();
+            EXIT_IF(newPackage == nullptr, ERROR_FALURE);
             RUN(receive(std::move(newPackage)));
-            m_timer.setTimer(g_oneSecond / m_params.packageProduceFrequency);
+            m_timer.setTimer(g_oneSecond / (modelTime_t)m_params.packageProduceFrequency);
         }
     }
 
@@ -125,10 +123,9 @@ status_t Node::send(packagePtr_t pack)
 
     EXIT_IF(pack == nullptr, ERROR_NO_EFFECT);
     {
-        Route route = m_table.lock()->get(pack->source, pack->destination);
-        auto self = std::find(route.path.begin(), route.path.end(), m_params.addr);
+        auto self = std::find(pack->path.begin(), pack->path.end(), m_params.addr);
 
-        EXIT_IF(self == route.path.end(), ERROR_LOGIC);
+        EXIT_IF(self == pack->path.end(), ERROR_LOGIC);
 
         // Trying to get next dest node
         self++;
@@ -234,12 +231,22 @@ status_t Node::updateMetrics()
 
 packagePtr_t Node::generatePackage()
 {
-    std::srand(std::time(nullptr));
+    status_t status = ERROR_OK;
     dataVolume_t volume = m_params.minPackageSize + (std::rand() % (m_params.maxPackageSize - m_params.minPackageSize + 1)); // m_minPackageSize -> m_maxPackageSize
     hostAddress_t source = m_params.addr;
-    hostAddress_t destination = m_nodeContainer->getRandom(RoleType::CONSUMER)->m_params.addr;
+    hostAddress_t destination = m_nodeContainer->getRandom(RoleType::CONSUMER, m_params.addr)->m_params.addr;
 
     auto pkg = std::make_unique<Package>(source, destination, volume);
     pkg->inSystem = Time::instance().get();
+
+    // Tying to get route
+    Route route = m_table.lock()->get(source, destination);
+    auto self = std::find(route.path.begin(), route.path.end(), m_params.addr);
+    EXIT_IF(self == route.path.end(), ERROR_LOGIC);
+
+    pkg->path = route.path;
+
+exit:
+    if (IS_UNSUCCESS(status)) return nullptr;
     return pkg;
 }

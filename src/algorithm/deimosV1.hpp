@@ -1,12 +1,13 @@
-#ifndef BELLMAN_FORD_HPP
-#define BELLMAN_FORD_HPP
+#ifndef DEIMOSV1_HPP
+#define DEIMOSV1_HPP
 
 #include "algorithmBase.hpp"
 
-class BellmanFord : public AlgorithmBase
+class DeimosV1 : public AlgorithmBase
 {
 public:
-    BellmanFord(int maxPathLength, double, double, double);
+    DeimosV1(int maxPathLength, double reqSpeed, double reqPacketloss, double reqPing);
+
 private:
     status_t adoptStartMatrix(ConnectMatrix_t& startMatrix) override;
     status_t isPathPossible(hostAddress_t startLineAddr, const std::pair<hostAddress_t, Cell>& startElement, hostAddress_t prevLineAddr, const std::pair<hostAddress_t, Cell>& prevElement) override;
@@ -15,6 +16,9 @@ private:
 
     // Config
     int m_maxPathLength;
+    double m_reqSpeed;
+    double m_reqPacketloss;
+    double m_reqPing;
 };
 
 #endif

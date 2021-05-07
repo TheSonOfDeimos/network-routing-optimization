@@ -18,7 +18,6 @@
 class RoutingTable;
 class Statistic;
 
-
 bool operator == (const std::vector<RoleType>& l, const std::vector<RoleType>& r);
 
 struct NodeCharacteristics
@@ -29,7 +28,7 @@ struct NodeCharacteristics
     // Relative values
     double ping = 0; // ms
     double packetLoss = 0; // amount of lost packets in % per 100 packets
-    double speed = 0; // Mbit/sec
+    double speed = 1e6; // Mbit/sec
 
     // Absolute values
     int NetworkInterfaceCount = 5; // Number of parallel working network interfaces
@@ -44,12 +43,6 @@ struct NodeCharacteristics
     int packageProduceFrequency = 0; // Package per second Pkg/sec (if role is PRODUSER)
     dataVolume_t minPackageSize = 0; // Bytes (if role is PRODUSER)
     dataVolume_t maxPackageSize = 0; // Bytes (if role is PRODUSER)
-
-    // ==================================== Requirenments ====================================
-    modelTime_t req_ping = 0.0; // ms
-    double req_packetLoss = 0.0; // amount of lost packets in % per 100 packets
-    double req_speed = 0.0; // Mbit/sec
-    double req_bandwidth = 100000.0; // Mbit/sec
 
     static hostAddress_t dhcp();
 };

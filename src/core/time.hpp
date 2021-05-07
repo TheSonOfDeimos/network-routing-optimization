@@ -26,6 +26,7 @@ public:
 
     modelTime_t get();
     status_t set(modelTime_t time);
+    status_t setStep(modelTime_t step);
     status_t tick();
 
 private:
